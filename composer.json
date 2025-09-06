@@ -51,7 +51,7 @@
         "content-generation",
         "ai"
     ],
-    "homepage": "https://docs.gemcontent.com/api",
+    "homepage": "https://gemcontent.com/api-documentation",
     "support": {
         "issues": "https://github.com/gemcontent/gemcontent-php/issues",
         "source": "https://github.com/gemcontent/gemcontent-php"
