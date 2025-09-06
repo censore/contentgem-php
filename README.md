@@ -1,6 +1,6 @@
-# ContentGem PHP SDK
+# GemContent PHP SDK
 
-Official PHP SDK for the ContentGem API - a powerful content generation platform using AI.
+Official PHP SDK for the GemContent API - a powerful content generation platform using AI.
 
 ## Installation
 
@@ -15,7 +15,7 @@ composer require contentgem/php-sdk
 
 require 'vendor/autoload.php';
 
-use ContentGem\Client;
+use GemContent\Client;
 
 // Initialize client
 $client = new Client(
@@ -58,7 +58,7 @@ if ($result['success']) {
 ## Features
 
 - ✅ **Full PHP 7.4+ support** with type hints
-- ✅ **Complete API coverage** - all ContentGem API endpoints
+- ✅ **Complete API coverage** - all GemContent API endpoints
 - ✅ **AI Content Generation** - blog posts, reviews, and articles
 - ✅ **AI Image Generation** - generate images using AI
 - ✅ **Image Management** - upload, update, and manage images
@@ -82,7 +82,7 @@ new Client($apiKey, $baseUrl = 'https://gemcontent.com/api/v1', $timeout = 30)
 
 **Parameters:**
 
-- `$apiKey` (string): Your ContentGem API key
+- `$apiKey` (string): Your GemContent API key
 - `$baseUrl` (string, optional): API base URL
 - `$timeout` (int, optional): Request timeout in seconds
 
@@ -388,7 +388,7 @@ composer stan
 
 ## API Endpoints Coverage
 
-The PHP SDK provides complete coverage of the ContentGem API:
+The PHP SDK provides complete coverage of the GemContent API:
 
 ### ✅ Publications
 

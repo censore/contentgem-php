@@ -1,8 +1,8 @@
 <?php
 
-namespace ContentGem\Tests;
+namespace GemContent\Tests;
 
-use ContentGem\Client;
+use GemContent\Client;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;

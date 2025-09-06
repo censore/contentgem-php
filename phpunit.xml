@@ -6,7 +6,7 @@
          verbose="true"
          stopOnFailure="false">
     <testsuites>
-        <testsuite name="ContentGem PHP SDK">
+        <testsuite name="GemContent PHP SDK">
             <directory>tests</directory>
         </testsuite>
     </testsuites>

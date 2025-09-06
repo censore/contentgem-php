@@ -1,15 +1,15 @@
 <?php
 
-namespace ContentGem;
+namespace GemContent;
 
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Exception\RequestException;
 use GuzzleHttp\Psr7\Utils;
 
 /**
- * ContentGem API Client
+ * GemContent API Client
  * 
- * Provides methods to interact with the ContentGem API for content generation,
+ * Provides methods to interact with the GemContent API for content generation,
  * publication management, and more.
  */
 class Client
@@ -20,9 +20,9 @@ class Client
     private GuzzleClient $httpClient;
 
     /**
-     * Initialize the ContentGem client.
+     * Initialize the GemContent client.
      * 
-     * @param string $apiKey Your ContentGem API key
+     * @param string $apiKey Your GemContent API key
      * @param string $baseUrl API base URL (default: https://gemcontent.com/api/v1)
      * @param int $timeout Request timeout in seconds (default: 30)
      */
