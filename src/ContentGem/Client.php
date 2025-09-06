@@ -23,10 +23,10 @@ class Client
      * Initialize the ContentGem client.
      * 
      * @param string $apiKey Your ContentGem API key
-     * @param string $baseUrl API base URL (default: https://your-domain.com/api/v1)
+     * @param string $baseUrl API base URL (default: https://gemcontent.com/api/v1)
      * @param int $timeout Request timeout in seconds (default: 30)
      */
-    public function __construct(string $apiKey, string $baseUrl = 'https://your-domain.com/api/v1', int $timeout = 30)
+    public function __construct(string $apiKey, string $baseUrl = 'https://gemcontent.com/api/v1', int $timeout = 30)
     {
         $this->apiKey = $apiKey;
         $this->baseUrl = rtrim($baseUrl, '/');
@@ -74,11 +74,22 @@ class Client
      * 
      * @param int $page Page number (default: 1)
      * @param int $limit Items per page (default: 10)
+     * @param string|null $type Filter by type (blog, review)
+     * @param string|null $status Filter by status (draft, published, archived)
      * @return array Publications response
      */
-    public function getPublications(int $page = 1, int $limit = 10): array
+    public function getPublications(int $page = 1, int $limit = 10, ?string $type = null, ?string $status = null): array
     {
         $params = ['page' => $page, 'limit' => $limit];
+        
+        if ($type !== null) {
+            $params['type'] = $type;
+        }
+        
+        if ($status !== null) {
+            $params['status'] = $status;
+        }
+        
         return $this->makeRequest('GET', '/publications', ['query' => $params]);
     }
 
@@ -136,6 +147,38 @@ class Client
     public function checkGenerationStatus(string $sessionId): array
     {
         return $this->makeRequest('GET', "/publications/generation-status/{$sessionId}");
+    }
+
+    /**
+     * Bulk generate multiple publications.
+     * 
+     * @param array $prompts Array of generation prompts
+     * @param array $companyInfo Company information
+     * @param array $commonSettings Common settings for all publications
+     * @return array Bulk generation response
+     */
+    public function bulkGeneratePublications(array $prompts, array $companyInfo = [], array $commonSettings = []): array
+    {
+        $requestData = [
+            'prompts' => $prompts,
+            'settings' => [
+                'company_info' => $companyInfo,
+                'keywords' => $commonSettings['keywords'] ?? []
+            ]
+        ];
+        
+        return $this->makeRequest('POST', '/publications/bulk-generate', ['json' => $requestData]);
+    }
+
+    /**
+     * Check bulk generation status.
+     * 
+     * @param string $bulkSessionId Bulk generation session ID
+     * @return array Bulk generation status
+     */
+    public function checkBulkGenerationStatus(string $bulkSessionId): array
+    {
+        return $this->makeRequest('GET', "/publications/bulk-status/{$bulkSessionId}");
     }
 
     /**
@@ -232,11 +275,22 @@ class Client
      * 
      * @param int $page Page number (default: 1)
      * @param int $limit Items per page (default: 10)
+     * @param string|null $publicationId Filter by publication ID
+     * @param string|null $search Search in prompts and section titles
      * @return array Images response
      */
-    public function getImages(int $page = 1, int $limit = 10): array
+    public function getImages(int $page = 1, int $limit = 10, ?string $publicationId = null, ?string $search = null): array
     {
         $params = ['page' => $page, 'limit' => $limit];
+        
+        if ($publicationId !== null) {
+            $params['publicationId'] = $publicationId;
+        }
+        
+        if ($search !== null) {
+            $params['search'] = $search;
+        }
+        
         return $this->makeRequest('GET', '/images', ['query' => $params]);
     }
 
@@ -282,17 +336,52 @@ class Client
     }
 
     /**
-     * Generate AI image.
+     * Get company information.
      * 
-     * @param string $prompt Image generation prompt
-     * @param string $style Image style
-     * @param string $size Image size
-     * @return array Generation response
+     * @return array Company information
      */
-    public function generateImage(string $prompt, string $style = 'realistic', string $size = '1024x1024'): array
+    public function getCompanyInfo(): array
     {
-        $data = ['prompt' => $prompt, 'style' => $style, 'size' => $size];
-        return $this->makeRequest('POST', '/images/generate', ['json' => $data]);
+        return $this->makeRequest('GET', '/company');
+    }
+
+    /**
+     * Update company information.
+     * 
+     * @param array $companyData Company data to update
+     * @return array Updated company information
+     */
+    public function updateCompanyInfo(array $companyData): array
+    {
+        return $this->makeRequest('PUT', '/company', ['json' => $companyData]);
+    }
+
+    /**
+     * Parse company website.
+     * 
+     * @param string|array $urls Website URL(s) to parse
+     * @return array Parsing response
+     */
+    public function parseCompanyWebsite($urls): array
+    {
+        // Convert single URL to array for consistency with API
+        if (is_string($urls)) {
+            $urls = [$urls];
+        }
+        
+        return $this->makeRequest('POST', '/company/parse', [
+            'json' => ['urls' => $urls]
+        ]);
+    }
+
+    /**
+     * Get company parsing status.
+     * 
+     * @return array Parsing status
+     */
+    public function getCompanyParsingStatus(): array
+    {
+        return $this->makeRequest('GET', '/company/parsing-status');
     }
 
     /**
@@ -305,6 +394,69 @@ class Client
     {
         return $this->makeRequest('DELETE', "/images/{$imageId}");
     }
+
+    /**
+     * Generate image using AI.
+     * 
+     * @param string $prompt Image generation prompt
+     * @param string $style Image style (realistic, artistic, cartoon, etc.)
+     * @param string $size Image size (1024x1024, 512x512, etc.)
+     * @param string|null $publicationId Optional publication ID to associate with
+     * @return array Generation response
+     */
+    public function generateImage(string $prompt, string $style = 'realistic', string $size = '1024x1024', ?string $publicationId = null): array
+    {
+        $requestData = [
+            'prompt' => $prompt,
+            'style' => $style,
+            'size' => $size
+        ];
+        
+        if ($publicationId) {
+            $requestData['publicationId'] = $publicationId;
+        }
+        
+        return $this->makeRequest('POST', '/images/generate', ['json' => $requestData]);
+    }
+
+    /**
+     * Get images for specific publication.
+     * 
+     * @param string $publicationId Publication ID
+     * @param int $page Page number (default: 1)
+     * @param int $limit Items per page (default: 10)
+     * @return array Publication images
+     */
+    public function getPublicationImages(string $publicationId, int $page = 1, int $limit = 10): array
+    {
+        return $this->makeRequest('GET', "/publications/{$publicationId}/images", [
+            'query' => ['page' => $page, 'limit' => $limit]
+        ]);
+    }
+
+    /**
+     * Update image metadata.
+     * 
+     * @param string $imageId Image ID
+     * @param array $data Image data to update
+     * @return array Updated image
+     */
+    public function updateImage(string $imageId, array $data): array
+    {
+        return $this->makeRequest('PUT', "/images/{$imageId}", ['json' => $data]);
+    }
+
+    /**
+     * Check publication generation status by publication ID.
+     * 
+     * @param string $publicationId Publication ID
+     * @return array Generation status
+     */
+    public function checkPublicationGenerationStatus(string $publicationId): array
+    {
+        return $this->makeRequest('GET', "/publications/publication-status/{$publicationId}");
+    }
+
 
     /**
      * Get subscription status.
@@ -367,119 +519,6 @@ class Client
     }
 
     /**
-     * Bulk generate multiple publications.
-     * 
-     * @param array $prompts Array of prompts
-     * @param array $companyInfo Company information
-     * @param array $commonSettings Common settings for all publications
-     * @return array Bulk generation response
-     */
-    public function bulkGeneratePublications(array $prompts, array $companyInfo = [], array $commonSettings = []): array
-    {
-        $data = [
-            'prompts' => $prompts,
-            'company_info' => array_merge([
-                'name' => 'My Company',
-                'description' => 'Technology company',
-                'industry' => 'Technology',
-                'target_audience' => 'Developers'
-            ], $companyInfo),
-            'common_settings' => array_merge([
-                'length' => 'medium',
-                'style' => 'educational',
-                'include_examples' => true
-            ], $commonSettings)
-        ];
-        
-        return $this->makeRequest('POST', '/publications/bulk-generate', ['json' => $data]);
-    }
-
-    /**
-     * Check bulk generation status.
-     * 
-     * @param string $bulkSessionId Bulk session ID
-     * @return array Bulk generation status
-     */
-    public function checkBulkGenerationStatus(string $bulkSessionId): array
-    {
-        $data = ['bulk_session_id' => $bulkSessionId];
-        return $this->makeRequest('POST', '/publications/bulk-status', ['json' => $data]);
-    }
-
-    /**
-     * Get company information.
-     * 
-     * @return array Company information
-     */
-    public function getCompanyInfo(): array
-    {
-        return $this->makeRequest('GET', '/company');
-    }
-
-    /**
-     * Update company information.
-     * 
-     * @param array $companyData Company data to update
-     * @return array Update response
-     */
-    public function updateCompanyInfo(array $companyData): array
-    {
-        return $this->makeRequest('PUT', '/company', ['json' => $companyData]);
-    }
-
-    /**
-     * Parse company website.
-     * 
-     * @param string $websiteUrl Website URL to parse
-     * @return array Parsing response
-     */
-    public function parseCompanyWebsite(string $websiteUrl): array
-    {
-        $data = ['website_url' => $websiteUrl];
-        return $this->makeRequest('POST', '/company/parse', ['json' => $data]);
-    }
-
-    /**
-     * Get company parsing status.
-     * 
-     * @return array Parsing status
-     */
-    public function getCompanyParsingStatus(): array
-    {
-        return $this->makeRequest('GET', '/company/parsing-status');
-    }
-
-    /**
-     * Wait for bulk generation to complete.
-     * 
-     * @param string $bulkSessionId Bulk session ID
-     * @param int $maxAttempts Maximum number of attempts
-     * @param int $delaySeconds Delay between attempts in seconds
-     * @return array Final bulk generation status
-     * @throws \Exception If generation times out or fails
-     */
-    public function waitForBulkGeneration(string $bulkSessionId, int $maxAttempts = 120, int $delaySeconds = 10): array
-    {
-        for ($attempt = 0; $attempt < $maxAttempts; $attempt++) {
-            $status = $this->checkBulkGenerationStatus($bulkSessionId);
-            
-            if ($status['success'] && isset($status['data']['status']) && $status['data']['status'] === 'completed') {
-                return $status;
-            }
-            
-            if ($status['success'] && isset($status['data']['status']) && $status['data']['status'] === 'failed') {
-                throw new \Exception('Bulk generation failed');
-            }
-            
-            if ($attempt < $maxAttempts - 1) {
-                sleep($delaySeconds);
-            }
-        }
-        
-        throw new \Exception('Bulk generation timeout');
-    }
-
-    /**
      * Health check.
      * 
      * @return array Health status
@@ -488,4 +527,5 @@ class Client
     {
         return $this->makeRequest('GET', '/health');
     }
+
 } 

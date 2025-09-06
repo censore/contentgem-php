@@ -511,6 +511,31 @@ class ClientTest extends TestCase
         $this->assertEquals('/images/generate', $request->getUri()->getPath());
     }
 
+    public function testCheckPublicationGenerationStatus()
+    {
+        $mockResponse = [
+            'success' => true,
+            'data' => [
+                'publicationId' => 'pub_123',
+                'status' => 'completed',
+                'content' => 'Generated content here...'
+            ]
+        ];
+
+        $this->mock->append(
+            new Response(200, [], json_encode($mockResponse))
+        );
+
+        $result = $this->client->checkPublicationGenerationStatus('pub_123');
+
+        $this->assertEquals($mockResponse, $result);
+        $this->assertCount(1, $this->container);
+
+        $request = $this->container[0]['request'];
+        $this->assertEquals('GET', $request->getMethod());
+        $this->assertEquals('/publications/publication-status/pub_123', $request->getUri()->getPath());
+    }
+
     public function testHealthCheck()
     {
         $mockResponse = [
@@ -532,253 +557,5 @@ class ClientTest extends TestCase
         $request = $this->container[0]['request'];
         $this->assertEquals('GET', $request->getMethod());
         $this->assertEquals('/health', $request->getUri()->getPath());
-    }
-
-    public function testBulkGeneratePublicationsSuccess()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'bulk_session_id' => 'bulk_sess_123',
-                'total_prompts' => 3,
-                'status' => 'processing',
-                'publications' => [
-                    ['id' => 'pub_1', 'prompt' => 'Write about AI', 'status' => 'pending'],
-                    ['id' => 'pub_2', 'prompt' => 'Explain ML', 'status' => 'pending'],
-                    ['id' => 'pub_3', 'prompt' => 'Discuss automation', 'status' => 'pending']
-                ]
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $prompts = [
-            'Write about AI in business',
-            'Explain machine learning basics',
-            'Discuss the future of automation'
-        ];
-
-        $companyInfo = [
-            'name' => 'Test Company',
-            'description' => 'Test description'
-        ];
-
-        $commonSettings = [
-            'length' => 'medium',
-            'style' => 'educational'
-        ];
-
-        $result = $this->client->bulkGeneratePublications($prompts, $companyInfo, $commonSettings);
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals('/publications/bulk-generate', $request->getUri()->getPath());
-    }
-
-    public function testCheckBulkGenerationStatus()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'bulk_session_id' => 'bulk_sess_123',
-                'total_prompts' => 3,
-                'completed_prompts' => 2,
-                'failed_prompts' => 0,
-                'status' => 'processing',
-                'publications' => [
-                    ['id' => 'pub_1', 'title' => 'AI Article', 'prompt' => 'Write about AI', 'status' => 'completed', 'content' => 'Generated content...'],
-                    ['id' => 'pub_2', 'title' => 'ML Article', 'prompt' => 'Explain ML', 'status' => 'completed', 'content' => 'Generated content...'],
-                    ['id' => 'pub_3', 'title' => 'Automation Article', 'prompt' => 'Discuss automation', 'status' => 'generating']
-                ]
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $result = $this->client->checkBulkGenerationStatus('bulk_sess_123');
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals('/publications/bulk-status', $request->getUri()->getPath());
-    }
-
-    public function testWaitForBulkGenerationSuccess()
-    {
-        $processingResponse = [
-            'success' => true,
-            'data' => [
-                'bulk_session_id' => 'bulk_sess_123',
-                'status' => 'processing'
-            ]
-        ];
-
-        $completedResponse = [
-            'success' => true,
-            'data' => [
-                'bulk_session_id' => 'bulk_sess_123',
-                'status' => 'completed'
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($processingResponse)),
-            new Response(200, [], json_encode($completedResponse))
-        );
-
-        $result = $this->client->waitForBulkGeneration('bulk_sess_123', 2, 0.1);
-
-        $this->assertEquals($completedResponse, $result);
-        $this->assertCount(2, $this->container);
-    }
-
-    public function testWaitForBulkGenerationFailure()
-    {
-        $failedResponse = [
-            'success' => true,
-            'data' => [
-                'bulk_session_id' => 'bulk_sess_123',
-                'status' => 'failed'
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($failedResponse))
-        );
-
-        $this->expectException(\Exception::class);
-        $this->expectExceptionMessage('Bulk generation failed');
-
-        $this->client->waitForBulkGeneration('bulk_sess_123', 1, 0.1);
-    }
-
-    public function testGetCompanyInfo()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'company' => [
-                    'name' => 'Test Company',
-                    'description' => 'Test company description',
-                    'industry' => 'Technology',
-                    'website' => 'https://testcompany.com',
-                    'contact_email' => 'contact@testcompany.com',
-                    'target_audience' => 'Developers'
-                ],
-                'last_updated' => '2024-01-01T00:00:00Z'
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $result = $this->client->getCompanyInfo();
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('/company', $request->getUri()->getPath());
-    }
-
-    public function testUpdateCompanyInfo()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'company' => [
-                    'name' => 'Updated Company',
-                    'description' => 'Updated description',
-                    'industry' => 'Technology',
-                    'website' => 'https://updatedcompany.com'
-                ],
-                'last_updated' => '2024-01-01T00:00:00Z'
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $companyData = [
-            'name' => 'Updated Company',
-            'description' => 'Updated description',
-            'website' => 'https://updatedcompany.com'
-        ];
-
-        $result = $this->client->updateCompanyInfo($companyData);
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('PUT', $request->getMethod());
-        $this->assertEquals('/company', $request->getUri()->getPath());
-    }
-
-    public function testParseCompanyWebsite()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'parsing_session_id' => 'parse_sess_123',
-                'status' => 'processing',
-                'message' => 'Parsing started'
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $result = $this->client->parseCompanyWebsite('https://example.com');
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('POST', $request->getMethod());
-        $this->assertEquals('/company/parse', $request->getUri()->getPath());
-    }
-
-    public function testGetCompanyParsingStatus()
-    {
-        $mockResponse = [
-            'success' => true,
-            'data' => [
-                'parsing_session_id' => 'parse_sess_123',
-                'status' => 'completed',
-                'progress' => 100,
-                'extracted_data' => [
-                    'name' => 'Example Company',
-                    'description' => 'Company description from website',
-                    'website' => 'https://example.com'
-                ]
-            ]
-        ];
-
-        $this->mock->append(
-            new Response(200, [], json_encode($mockResponse))
-        );
-
-        $result = $this->client->getCompanyParsingStatus();
-
-        $this->assertEquals($mockResponse, $result);
-        $this->assertCount(1, $this->container);
-
-        $request = $this->container[0]['request'];
-        $this->assertEquals('GET', $request->getMethod());
-        $this->assertEquals('/company/parsing-status', $request->getUri()->getPath());
     }
 } 

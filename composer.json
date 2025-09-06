@@ -1,12 +1,13 @@
 {
-    "name": "contentgem/php-sdk",
-    "description": "Official PHP SDK for ContentGem API",
+    "name": "gemcontent/php-sdk",
+    "description": "Official PHP SDK for GemContent API - AI-powered content generation platform",
     "type": "library",
     "license": "MIT",
+    "version": "2.3.0",
     "authors": [
         {
-            "name": "ContentGem Team",
-            "email": "support@contentgem.com"
+            "name": "GemContent Team",
+            "email": "support@gemcontent.com"
         }
     ],
     "require": {
@@ -22,12 +23,12 @@
     },
     "autoload": {
         "psr-4": {
-            "ContentGem\\": "src/"
+            "GemContent\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ContentGem\\Tests\\": "tests/"
+            "GemContent\\Tests\\": "tests/"
         }
     },
     "scripts": {
@@ -43,16 +44,16 @@
     "minimum-stability": "stable",
     "prefer-stable": true,
     "keywords": [
-        "contentgem",
+        "gemcontent",
         "api",
         "sdk",
         "php",
         "content-generation",
         "ai"
     ],
-    "homepage": "https://docs.contentgem.com/api",
+    "homepage": "https://docs.gemcontent.com/api",
     "support": {
-        "issues": "https://github.com/contentgem/contentgem-php/issues",
-        "source": "https://github.com/contentgem/contentgem-php"
+        "issues": "https://github.com/gemcontent/gemcontent-php/issues",
+        "source": "https://github.com/gemcontent/gemcontent-php"
     }
 } 
